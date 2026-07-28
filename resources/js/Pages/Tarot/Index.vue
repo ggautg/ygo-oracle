@@ -35,9 +35,9 @@ async function drawSpread() {
             </h1>
 
             <div class="flex flex-col sm:flex-row gap-3 justify-center mb-12">
-                <input v-model="question" type="text" placeholder="¿Sobre qué querés preguntar? (opcional)"
+                <input v-model="question" type="text" placeholder="¿Sobre qué querés preguntar? (opcional)" @keydown.enter="drawSpread"
                     class="bg-panel border border-white/10 rounded px-4 py-3 text-sm w-full sm:w-80 placeholder:text-stone-500 focus:outline-none focus:border-gold-dim transition-colors" />
-                <button @click="drawSpread" :disabled="loading"
+                <button @click="drawSpread" :disabled="loading"  
                     class="flex items-center justify-center gap-2 bg-gradient-to-b from-amber-300 to-gold text-obsidian font-mono text-xs uppercase tracking-wider font-semibold px-6 py-3 rounded shadow-lg shadow-gold/20 hover:-translate-y-0.5 transition-transform disabled:opacity-60 disabled:translate-y-0">
                     <Loader2 v-if="loading" class="w-4 h-4 animate-spin" />
                     <Sparkles v-else class="w-4 h-4" />

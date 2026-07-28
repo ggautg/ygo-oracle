@@ -2,11 +2,12 @@
 
 namespace App\Services;
 
-use App\Models\YgoCard;
-use App\Models\OracleRace;
 use App\Models\OracleAttribute;
 use App\Models\OracleNumber;
+use App\Models\OracleRace;
+use App\Models\YgoCard;
 use Illuminate\Support\Collection;
+use Stichoza\GoogleTranslate\GoogleTranslate;
 
 class TarotService
 {
@@ -55,6 +56,7 @@ class TarotService
         return collect(range(0, $count - 1))->map(function ($i) use ($chunks, $total) {
             $chunkHex = $chunks[$i] ?? bin2hex(random_bytes(4));
             $offset = hexdec($chunkHex) % $total;
+
             return YgoCard::skip($offset)->take(1)->first();
         });
     }
@@ -90,6 +92,7 @@ class TarotService
         if ($attributes->count() >= 2 && $attributes->unique()->count() === 1) {
             $out[] = "Las cartas comparten el atributo {$attributes->first()}.";
         }
+
         return $out;
     }
 
@@ -107,6 +110,7 @@ class TarotService
         while ($n > 9) {
             $n = array_sum(str_split((string) $n));
         }
+
         return $n;
     }
 
@@ -120,10 +124,14 @@ class TarotService
 
     private function extractRandomWord(string $description): string
     {
+        $description = str_replace('"', '', $description);
+        $tr = new GoogleTranslate;
+        $description = $tr->setSource('en')->setTarget('es')->translate($description);
         $words = array_filter(
             preg_split('/[\s,.;:()]+/', $description),
             fn ($w) => strlen($w) > 3
         );
+
         return $words ? $words[array_rand($words)] : '...';
     }
 }
