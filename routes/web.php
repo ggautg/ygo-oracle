@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\Admin\OracleTextsController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\TarotController;
@@ -15,17 +15,13 @@ Route::get('/', function () {
     ]);
 });
 
-Route::get('/dashboard', function () {
-    return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
-
 Route::middleware('auth')->group(function () {
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::get('/admin/oraculo-textos', [OracleTextsController::class, 'index'])->name('admin.oracle.index');
+    Route::put('/admin/oraculo-textos/{type}/{id}', [OracleTextsController::class, 'update'])->name('admin.oracle.update');
 });
 
 Route::get('/oraculo', [TarotController::class, 'index'])->name('tarot.index');
 Route::post('/oraculo/tirar', [TarotController::class, 'draw'])->name('tarot.draw');
+Route::get('/oraculo/t/{uuid}', [TarotController::class, 'show'])->name('tarot.show');
 
 require __DIR__.'/auth.php';

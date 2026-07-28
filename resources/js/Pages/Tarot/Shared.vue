@@ -1,69 +1,49 @@
 <script setup>
-import { ref } from 'vue';
-import axios from 'axios';
+import { Head, Link } from '@inertiajs/vue3';
 import { Sparkles, Loader2, Eye, Hash, ScrollText, Swords, Scale, Shield } from 'lucide-vue-next';
 
 const POSTURE_ICONS = { Swords, Scale, Shield };
 
-const question = ref('');
-const spread = ref(null);
-const loading = ref(false);
-const error = ref(null);
-
-async function drawSpread() {
-    loading.value = true;
-    error.value = null;
-
-    try {
-        const response = await axios.post('/oraculo/tirar', {
-            question: question.value || null,
-        });
-        spread.value = response.data;
-    } catch (e) {
-        error.value = 'Algo salió mal. Probá de nuevo.';
-    } finally {
-        loading.value = false;
-    }
-}
+const props = defineProps({
+    reading: {
+        type: Object,
+        required: true,
+    },
+});
 </script>
 
 <template>
+
+    <Head title="Una tirada del Corazón de las Cartas" />
+
     <div class="min-h-screen bg-obsidian text-stone-200 px-4 py-12">
         <div class="max-w-4xl mx-auto">
 
+            <p class="text-center font-mono text-[11px] tracking-[0.2em] uppercase text-gold-dim mb-2">
+                Tirada compartida
+            </p>
             <h1
                 class="text-center font-display font-bold text-4xl sm:text-5xl bg-gradient-to-b from-amber-200 to-gold bg-clip-text text-transparent mb-3">
                 El Corazón de las Cartas
             </h1>
 
-            <p class="text-center text-sm text-stone-400 mb-8">
-                Escribí o pensa tu pregunta, respira hondo y dejá que el juego saque 3 cartas y descubrí lo que el
-                destino tiene para vos.
+            <p v-if="reading.question"
+                class="text-center text-stone-400 max-w-md mx-auto mb-10 text-sm leading-relaxed italic">
+                "{{ reading.question }}"
+            </p>
+            <p v-else class="text-center text-stone-500 max-w-md mx-auto mb-10 text-xs leading-relaxed">
+                Tirada general, sin pregunta puntual.
             </p>
 
-            <div class="flex flex-col sm:flex-row gap-3 justify-center mb-12">
-                <input v-model="question" type="text" placeholder="¿Sobre qué querés preguntar? (opcional)"
-                    @keydown.enter="drawSpread"
-                    class="bg-panel border border-white/10 rounded px-4 py-3 text-sm w-full sm:w-80 placeholder:text-stone-500 focus:outline-none focus:border-gold-dim transition-colors" />
-                <button @click="drawSpread" :disabled="loading"
-                    class="flex items-center justify-center gap-2 bg-gradient-to-b from-amber-300 to-gold text-obsidian font-mono text-xs uppercase tracking-wider font-semibold px-6 py-3 rounded shadow-lg shadow-gold/20 hover:-translate-y-0.5 transition-transform disabled:opacity-60 disabled:translate-y-0">
-                    <Loader2 v-if="loading" class="w-4 h-4 animate-spin" />
-                    <Sparkles v-else class="w-4 h-4" />
-                    {{ loading ? 'Sacando cartas...' : 'Sacar 3 cartas' }}
-                </button>
-            </div>
-
-            <p v-if="error" class="text-center text-red-400 text-sm mb-8">{{ error }}</p>
-
-            <div v-if="spread" class="space-y-6">
+            <div class="space-y-6">
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div v-for="(card, i) in spread.cards" :key="card.name"
+                    <div v-for="(card, i) in reading.cards" :key="card.name"
                         class="bg-gradient-to-b from-panel to-obsidian border border-white/10 rounded-lg p-5 animate-[fadeIn_0.5s_ease_forwards] opacity-0"
                         :style="{ animationDelay: `${i * 120}ms` }">
                         <div class="font-mono text-[10px] tracking-[0.16em] uppercase text-gold-dim mb-2">
                             {{ card.position }}
                         </div>
-                        <img :src="card.image_url" :alt="card.name"
+                        <img v-if="card.image_url" :src="card.image_url" :alt="card.name"
                             class="w-full aspect-[3/4] object-cover rounded-lg mb-3" />
                         <h3 class="font-display text-lg mb-2">{{ card.name }}</h3>
                         <div class="font-mono text-[11px] text-stone-400 border-b border-white/10 pb-3 mb-3">
@@ -73,7 +53,7 @@ async function drawSpread() {
                             {{ card.description_es || card.description }}
                         </div>
                         <div v-if="card.posture_label"
-                            class="inline-flex items-center gap-1.5 border border-white/10 bg-white/5 rounded-full px-3 py-1 text-[11px] font-mono text-stone-300 mb-3">
+                            class="inline-flex items-center gap-1.5 bg-white/5 border border-white/10 rounded-full px-3 py-1 text-[11px] font-mono text-stone-300 mb-3">
                             <component :is="POSTURE_ICONS[card.posture_icon]" class="w-3 h-3" />
                             {{ card.posture_label }}
                         </div>
@@ -81,43 +61,42 @@ async function drawSpread() {
                     </div>
                 </div>
 
-                <div v-if="spread.coincidences.length"
+                <div v-if="reading.coincidences.length"
                     class="bg-shadowpurple/10 border border-shadowpurple/40 rounded-lg p-5 flex gap-3">
                     <Eye class="w-4 h-4 text-shadowpurple shrink-0 mt-0.5" />
                     <div class="text-sm space-y-1">
-                        <p v-for="(c, i) in spread.coincidences" :key="i">{{ c }}</p>
+                        <p v-for="(c, i) in reading.coincidences" :key="i">{{ c }}</p>
                     </div>
                 </div>
 
                 <div class="bg-panel border border-white/10 rounded-lg p-5 flex items-center gap-5">
                     <div
                         class="w-14 h-14 rounded-full border border-gold-dim flex items-center justify-center font-display font-bold text-2xl text-gold shrink-0">
-                        {{ spread.numerology.digit }}
+                        {{ reading.numerology.digit }}
                     </div>
                     <div>
                         <div
                             class="font-mono text-[10px] tracking-[0.16em] uppercase text-gold-dim mb-1 flex items-center gap-1">
-                            <Hash class="w-3 h-3" /> Numerología · total {{ spread.numerology.total }}
+                            <Hash class="w-3 h-3" /> Numerología · total {{ reading.numerology.total }}
                         </div>
-                        <p class="text-sm">{{ spread.numerology.meaning }}</p>
+                        <p class="text-sm">{{ reading.numerology.meaning }}</p>
                     </div>
                 </div>
 
                 <div class="bg-panel border border-white/10 rounded-lg p-5">
                     <div
                         class="font-mono text-[10px] tracking-[0.16em] uppercase text-gold-dim mb-2 flex items-center gap-1">
-                        <ScrollText class="w-3 h-3" /> Palabras místicas
+                        <ScrollText class="w-3 h-3" /> Mensaje místico
                     </div>
-                    <p class="font-mono text-amber-200 tracking-wide">{{ spread.mystic_message }}</p>
+                    <p class="font-mono text-amber-200 tracking-wide">{{ reading.mystic_message }}</p>
                 </div>
+            </div>
 
-                <div v-if="spread.uuid" class="text-center">
-
-                    <a :href="`/oraculo/t/${spread.uuid}`" target="_blank"
-                        class="inline-flex items-center gap-2 text-xs font-mono text-gold-dim hover:text-gold underline underline-offset-4">
-                        Compartir esta tirada
-                    </a>
-                </div>
+            <div class="text-center mt-10">
+                <Link href="/oraculo"
+                    class="inline-flex items-center gap-2 text-xs font-mono text-gold-dim hover:text-gold underline underline-offset-4">
+                    <ArrowLeft class="w-3 h-3" /> Sacar tu propia tirada
+                </Link>
             </div>
         </div>
     </div>

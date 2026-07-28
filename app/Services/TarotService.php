@@ -4,36 +4,62 @@ namespace App\Services;
 
 use App\Models\OracleAttribute;
 use App\Models\OracleNumber;
+use App\Models\OraclePosture;
 use App\Models\OracleRace;
+use App\Models\Reading;
 use App\Models\YgoCard;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 
 class TarotService
 {
     private const POSITIONS = ['Pasado', 'Presente', 'Futuro'];
 
-    public function drawSpread(int $count = 3, ?string $question = null): array
+    public function drawSpread(int $count = 3, ?string $question = null, ?int $userId = null): array
     {
         $seed = $this->ritualSeed($question);
         $cards = $this->drawCardsFromSeed($count, $seed);
 
-        $spread = $cards->values()->map(fn ($card, $i) => [
-            'position' => self::POSITIONS[$i] ?? null,
-            'name' => $card->name,
-            'race' => $card->race,
-            'attribute' => $card->attribute,
-            'level' => $card->level,
-            'reading' => $this->renderCard($card),
-            'image_url' => $card->image_url,
-            'description' => $card->description,
-            'description_es' => $card->description_es,
+        $spread = $cards->values()->map(function ($card, $i) {
+            $posture = $this->posture($card);
+            $postureData = OraclePosture::where('posture', $posture)->first();
+
+            return [
+                'position' => self::POSITIONS[$i] ?? null,
+                'name' => $card->name,
+                'race' => $card->race,
+                'attribute' => $card->attribute,
+                'level' => $card->level,
+                'atk' => $card->atk,
+                'def' => $card->def,
+                'description' => $card->description_es ?? $card->description,
+                'posture_label' => $postureData->label ?? null,
+                'posture_icon' => $postureData->icon ?? null,
+                'reading' => $this->renderCard($card),
+                'image_url' => $card->image_url,
+            ];
+        });
+
+        $coincidences = $this->findCoincidences($cards);
+        $numerology = $this->numerologyReading($cards);
+        $mysticMessage = $this->mysticMessage($cards);
+
+        $reading = Reading::create([
+            'uuid' => (string) Str::uuid(),
+            'user_id' => $userId,
+            'question' => $question,
+            'cards' => $spread,
+            'coincidences' => $coincidences,
+            'numerology' => $numerology,
+            'mystic_message' => $mysticMessage,
         ]);
 
         return [
+            'uuid' => $reading->uuid,
             'cards' => $spread,
-            'coincidences' => $this->findCoincidences($cards),
-            'numerology' => $this->numerologyReading($cards),
-            'mystic_message' => $this->mysticMessage($cards),
+            'coincidences' => $coincidences,
+            'numerology' => $numerology,
+            'mystic_message' => $mysticMessage,
         ];
     }
 
@@ -74,12 +100,12 @@ class TarotService
 
     private function raceEssence(?string $race): ?string
     {
-        return $race . ': ' . OracleRace::where('race', $race)->value('essence');
+        return $race.': '.OracleRace::where('race', $race)->value('essence');
     }
 
     private function attributeEssence(?string $attribute): ?string
     {
-        return $attribute . ': ' . OracleAttribute::where('attribute', $attribute)->value('essence');
+        return $attribute.': '.OracleAttribute::where('attribute', $attribute)->value('essence');
     }
 
     private function findCoincidences(Collection $cards): array
@@ -131,5 +157,29 @@ class TarotService
             ->map(fn ($card) => $this->extractRandomWord($card->description_es ?? $card->description))
             ->shuffle()
             ->implode(' · ');
+    }
+
+    private function posture(YgoCard $card): string
+    {
+        $atk = $card->atk ?? 0;
+        $def = $card->def ?? 0;
+
+        if ($atk === 0 && $def === 0) {
+            return 'equilibrada';
+        }
+        if ($def === 0) {
+            return 'ofensiva';
+        }
+        if ($atk === 0) {
+            return 'defensiva';
+        }
+
+        $ratio = $atk / $def;
+
+        return match (true) {
+            $ratio >= 1.5 => 'ofensiva',
+            $ratio <= 0.67 => 'defensiva',
+            default => 'equilibrada',
+        };
     }
 }

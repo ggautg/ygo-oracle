@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Reading;
 use App\Services\TarotService;
-use Inertia\Inertia;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class TarotController extends Controller
 {
@@ -15,12 +16,18 @@ class TarotController extends Controller
 
     public function draw(Request $request, TarotService $tarotService)
     {
-        $validated = $request->validate([
-            'question' => 'nullable|string|max:255',
-        ]);
-
-        $spread = $tarotService->drawSpread(3, $validated['question'] ?? null);
+        $validated = $request->validate(['question' => 'nullable|string|max:255']);
+        $spread = $tarotService->drawSpread(3, $validated['question'] ?? null, $request->user()?->id);
 
         return response()->json($spread);
+    }
+
+    public function show(string $uuid)
+    {
+        $reading = Reading::where('uuid', $uuid)->firstOrFail();
+
+        return Inertia::render('Tarot/Shared', [
+            'reading' => $reading,
+        ]);
     }
 }
