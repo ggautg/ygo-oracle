@@ -34,10 +34,15 @@ async function drawSpread() {
                 El Corazón de las Cartas
             </h1>
 
+            <p class="text-center text-sm text-stone-400 mb-8">
+                Escribí o pensa tu pregunta, respira hondo y dejá que el juego saque 3 cartas y descubrí lo que el destino tiene para vos.
+            </p>
+
             <div class="flex flex-col sm:flex-row gap-3 justify-center mb-12">
-                <input v-model="question" type="text" placeholder="¿Sobre qué querés preguntar? (opcional)" @keydown.enter="drawSpread"
+                <input v-model="question" type="text" placeholder="¿Sobre qué querés preguntar? (opcional)"
+                    @keydown.enter="drawSpread"
                     class="bg-panel border border-white/10 rounded px-4 py-3 text-sm w-full sm:w-80 placeholder:text-stone-500 focus:outline-none focus:border-gold-dim transition-colors" />
-                <button @click="drawSpread" :disabled="loading"  
+                <button @click="drawSpread" :disabled="loading"
                     class="flex items-center justify-center gap-2 bg-gradient-to-b from-amber-300 to-gold text-obsidian font-mono text-xs uppercase tracking-wider font-semibold px-6 py-3 rounded shadow-lg shadow-gold/20 hover:-translate-y-0.5 transition-transform disabled:opacity-60 disabled:translate-y-0">
                     <Loader2 v-if="loading" class="w-4 h-4 animate-spin" />
                     <Sparkles v-else class="w-4 h-4" />
@@ -55,13 +60,16 @@ async function drawSpread() {
                         <div class="font-mono text-[10px] tracking-[0.16em] uppercase text-gold-dim mb-2">
                             {{ card.position }}
                         </div>
-                        <i class="block w-full aspect-[3/4] bg-cover bg-center rounded-lg mb-3"
-                            :style="{ backgroundImage: `url(${card.image_url})` }"></i>
+                        <img :src="card.image_url" :alt="card.name"
+                            class="w-full aspect-[3/4] object-cover rounded-lg mb-3" />
                         <h3 class="font-display text-lg mb-2">{{ card.name }}</h3>
                         <div class="font-mono text-[11px] text-stone-400 border-b border-white/10 pb-3 mb-3">
                             {{ card.race }} · {{ card.attribute }} · Nivel {{ card.level }}
                         </div>
-                        <p class="text-[13.5px] italic text-stone-300 leading-relaxed">{{ card.reading }}</p>
+                        <div class="font-mono text-[11px] text-stone-400 border-b border-white/10 pb-3 mb-3">
+                            {{ card.description_es || card.description }}
+                        </div>
+                        <p class="text-[13.5px] italic text-stone-300 leading-relaxed" v-html="card.reading"></p>
                     </div>
                 </div>
 
@@ -90,7 +98,7 @@ async function drawSpread() {
                 <div class="bg-panel border border-white/10 rounded-lg p-5">
                     <div
                         class="font-mono text-[10px] tracking-[0.16em] uppercase text-gold-dim mb-2 flex items-center gap-1">
-                        <ScrollText class="w-3 h-3" /> Mensaje místico
+                        <ScrollText class="w-3 h-3" /> Palabras místicas
                     </div>
                     <p class="font-mono text-amber-200 tracking-wide">{{ spread.mystic_message }}</p>
                 </div>

@@ -17,6 +17,7 @@ class YgoCard extends Model
         'atk',
         'def',
         'description',
+        'description_es',
         'banlist_status',
         'image_url',
     ];

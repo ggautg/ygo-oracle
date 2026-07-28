@@ -7,7 +7,6 @@ use App\Models\OracleNumber;
 use App\Models\OracleRace;
 use App\Models\YgoCard;
 use Illuminate\Support\Collection;
-use Stichoza\GoogleTranslate\GoogleTranslate;
 
 class TarotService
 {
@@ -26,6 +25,8 @@ class TarotService
             'level' => $card->level,
             'reading' => $this->renderCard($card),
             'image_url' => $card->image_url,
+            'description' => $card->description,
+            'description_es' => $card->description_es,
         ]);
 
         return [
@@ -68,17 +69,17 @@ class TarotService
             $this->attributeEssence($card->attribute),
         ]);
 
-        return implode(' ', $parts);
+        return implode('<br>', $parts);
     }
 
     private function raceEssence(?string $race): ?string
     {
-        return OracleRace::where('race', $race)->value('essence');
+        return $race . ': ' . OracleRace::where('race', $race)->value('essence');
     }
 
     private function attributeEssence(?string $attribute): ?string
     {
-        return OracleAttribute::where('attribute', $attribute)->value('essence');
+        return $attribute . ': ' . OracleAttribute::where('attribute', $attribute)->value('essence');
     }
 
     private function findCoincidences(Collection $cards): array
@@ -114,24 +115,21 @@ class TarotService
         return $n;
     }
 
-    private function mysticMessage(Collection $cards): string
+    private function extractRandomWord(string $ygoCardDescription): string
     {
-        return $cards
-            ->map(fn ($card) => $this->extractRandomWord($card->description))
-            ->shuffle()
-            ->implode(' · ');
-    }
-
-    private function extractRandomWord(string $description): string
-    {
-        $description = str_replace('"', '', $description);
-        $tr = new GoogleTranslate;
-        $description = $tr->setSource('en')->setTarget('es')->translate($description);
         $words = array_filter(
-            preg_split('/[\s,.;:()]+/', $description),
+            preg_split('/[\s,.;:()]+/', $ygoCardDescription),
             fn ($w) => strlen($w) > 3
         );
 
         return $words ? $words[array_rand($words)] : '...';
+    }
+
+    private function mysticMessage(Collection $cards): string
+    {
+        return $cards
+            ->map(fn ($card) => $this->extractRandomWord($card->description_es ?? $card->description))
+            ->shuffle()
+            ->implode(' · ');
     }
 }
