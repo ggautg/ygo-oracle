@@ -63,6 +63,35 @@ class TarotService
         ];
     }
 
+    public function drawYesNo(?string $question = null): array
+    {
+        $seed = $this->ritualSeed($question);
+        $card = $this->drawCardsFromSeed(1, $seed)->first();
+        $posture = $this->posture($card);
+
+        $answer = match ($posture) {
+            'ofensiva' => 'Sí',
+            'defensiva' => 'No',
+            'equilibrada' => 'Depende de vos',
+        };
+
+        $postureData = OraclePosture::where('posture', $posture)->first();
+
+        return [
+            'answer' => $answer,
+            'card' => [
+                'name' => $card->name,
+                'race' => $card->race,
+                'attribute' => $card->attribute,
+                'atk' => $card->atk,
+                'def' => $card->def,
+                'posture_label' => $postureData->label ?? null,
+                'posture_icon' => $postureData->icon ?? null,
+                'image_url' => $card->image_url,
+            ],
+        ];
+    }
+
     private function ritualSeed(?string $question = null): string
     {
         $entropy = implode('|', [

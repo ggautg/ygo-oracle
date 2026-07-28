@@ -21,7 +21,16 @@ class TarotController extends Controller
 
         return response()->json($spread);
     }
+public function yesNoIndex()
+{
+    return Inertia::render('Tarot/YesNo');
+}
 
+public function drawYesNo(Request $request, TarotService $tarotService)
+{
+    $validated = $request->validate(['question' => 'nullable|string|max:255']);
+    return response()->json($tarotService->drawYesNo($validated['question'] ?? null));
+}
     public function show(string $uuid)
     {
         $reading = Reading::where('uuid', $uuid)->firstOrFail();

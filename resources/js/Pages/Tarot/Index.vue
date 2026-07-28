@@ -2,7 +2,7 @@
 import { ref } from 'vue';
 import axios from 'axios';
 import { Sparkles, Loader2, Eye, Hash, ScrollText, Swords, Scale, Shield } from 'lucide-vue-next';
-
+import OraculoNav from '@/Components/OraculoNav.vue';
 const POSTURE_ICONS = { Swords, Scale, Shield };
 
 const question = ref('');
@@ -10,19 +10,43 @@ const spread = ref(null);
 const loading = ref(false);
 const error = ref(null);
 
+const counting = ref(false);
+const countdownMessage = ref('');
+
+const RITUAL_MESSAGES = [
+    'Barajando el destino...',
+    'Consultando el mazo...',
+    'El oráculo está decidiendo...',
+];
+
+function wait(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function playCountdown() {
+    for (const message of RITUAL_MESSAGES) {
+        countdownMessage.value = message;
+        await wait(800);
+    }
+}
+
 async function drawSpread() {
     loading.value = true;
+    counting.value = true;
     error.value = null;
+    spread.value = null;
 
     try {
-        const response = await axios.post('/oraculo/tirar', {
-            question: question.value || null,
-        });
+        const [response] = await Promise.all([
+            axios.post('/oraculo/tirar', { question: question.value || null }),
+            playCountdown(),
+        ]);
         spread.value = response.data;
     } catch (e) {
         error.value = 'Algo salió mal. Probá de nuevo.';
     } finally {
         loading.value = false;
+        counting.value = false;
     }
 }
 </script>
@@ -30,7 +54,7 @@ async function drawSpread() {
 <template>
     <div class="min-h-screen bg-obsidian text-stone-200 px-4 py-12">
         <div class="max-w-4xl mx-auto">
-
+            <OraculoNav />
             <h1
                 class="text-center font-display font-bold text-4xl sm:text-5xl bg-gradient-to-b from-amber-200 to-gold bg-clip-text text-transparent mb-3">
                 El Corazón de las Cartas
@@ -54,7 +78,12 @@ async function drawSpread() {
             </div>
 
             <p v-if="error" class="text-center text-red-400 text-sm mb-8">{{ error }}</p>
-
+            <div v-if="counting" class="text-center py-12">
+                <div
+                    class="inline-block w-10 h-10 border-2 border-gold-dim border-t-gold rounded-full animate-spin mb-4">
+                </div>
+                <p class="font-mono text-xs text-gold-dim tracking-wider uppercase">{{ countdownMessage }}</p>
+            </div>
             <div v-if="spread" class="space-y-6">
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div v-for="(card, i) in spread.cards" :key="card.name"

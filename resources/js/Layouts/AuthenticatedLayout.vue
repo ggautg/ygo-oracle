@@ -62,7 +62,17 @@ const showingNavigationDropdown = ref(false);
                                     </template>
 
                                     <template #content>
-                                       
+                                       <div class="block px-4 py-2 text-xs text-gray-400">
+                                            {{ $page.props.auth.user.email }}
+                                        </div>
+
+                                        <DropdownLink
+                                            :href="route('logout')"
+                                            method="post"
+                                            as="button"
+                                        >
+                                            Log Out
+                                        </DropdownLink>
                                     </template>
                                 </Dropdown>
                             </div>
