@@ -24,6 +24,7 @@ class TarotService
             'attribute' => $card->attribute,
             'level' => $card->level,
             'reading' => $this->renderCard($card),
+            'image_url' => $card->image_url,
         ]);
 
         return [
