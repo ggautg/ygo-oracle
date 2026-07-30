@@ -30,6 +30,11 @@ async function playCountdown() {
     }
 }
 
+const expandedCard = ref(null);
+function toggleBreakdown(i) {
+    expandedCard.value = expandedCard.value === i ? null : i;
+}
+
 async function drawSpread() {
     loading.value = true;
     counting.value = true;
@@ -107,6 +112,17 @@ async function drawSpread() {
                             {{ card.posture_label }}
                         </div>
                         <p class="text-[13.5px] italic text-stone-300 leading-relaxed" v-html="card.reading"></p>
+                        <button @click="toggleBreakdown(i)"
+                            class="mt-3 text-[10px] font-mono text-gold-dim hover:text-gold underline underline-offset-2">
+                            {{ expandedCard === i ? 'Ocultar' : '¿Por qué esta lectura?' }}
+                        </button>
+
+                        <div v-if="expandedCard === i" class="mt-3 pt-3 border-t border-white/10 space-y-2">
+                            <div v-for="(step, j) in card.breakdown" :key="j" class="text-[11px]">
+                                <span class="font-mono text-gold-dim">{{ step.label }} ({{ step.value }}):</span>
+                                <span class="text-stone-400"> {{ step.essence }}</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -139,6 +155,15 @@ async function drawSpread() {
                     </div>
                     <p class="font-mono text-amber-200 tracking-wide">{{ spread.mystic_message }}</p>
                 </div>
+                <div class="bg-panel border border-white/10 rounded-lg p-5">
+                     <div
+                        class="font-mono text-[10px] tracking-[0.16em] uppercase text-gold-dim mb-2 flex items-center gap-1">
+                        <ScrollText class="w-3 h-3" /> Sigilo místico
+                    </div>
+                    <div class="text-center py-4">
+                        <div class="inline-block w-24 h-24 opacity-70" v-html="spread.sigil"></div>
+                    </div>
+                </div>
 
                 <div v-if="spread.uuid" class="text-center">
 
@@ -148,6 +173,7 @@ async function drawSpread() {
                     </a>
                 </div>
             </div>
+
         </div>
     </div>
 </template>

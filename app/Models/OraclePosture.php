@@ -6,5 +6,5 @@ use Illuminate\Database\Eloquent\Model;
 
 class OraclePosture extends Model
 {
-    protected $fillable = ['posture', 'label', 'icon'];
+   protected $fillable = ['posture', 'label', 'icon', 'description'];
 }

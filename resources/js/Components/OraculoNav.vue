@@ -1,6 +1,6 @@
 <script setup>
 import { Link, usePage } from '@inertiajs/vue3';
-import { Sparkles, Zap, Settings } from 'lucide-vue-next';
+import { Sparkles, Zap, Settings, BookOpen } from 'lucide-vue-next';
 
 const page = usePage();
 const user = page.props.auth?.user ?? null;
@@ -22,6 +22,14 @@ const user = page.props.auth?.user ?? null;
             :class="{ 'text-gold': page.url === '/oraculo/si-no' }"
         >
             <Zap class="w-3.5 h-3.5" /> Sí / No
+        </Link>
+
+        <Link
+            href="/oraculo/grimorio"
+            class="flex items-center gap-1.5 text-stone-400 hover:text-gold transition-colors"
+            :class="{ 'text-gold': page.url === '/oraculo/grimorio' }"
+        >
+            <BookOpen class="w-3.5 h-3.5" /> Grimorio
         </Link>
 
         <Link

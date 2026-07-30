@@ -16,5 +16,6 @@ Route::post('/oraculo/tirar', [TarotController::class, 'draw'])->name('tarot.dra
 Route::get('/oraculo/t/{uuid}', [TarotController::class, 'show'])->name('tarot.show');
 Route::get('/oraculo/si-no', [TarotController::class, 'yesNoIndex'])->name('tarot.yesno.index');
 Route::post('/oraculo/si-no/tirar', [TarotController::class, 'drawYesNo'])->name('tarot.yesno.draw');
+Route::get('/oraculo/grimorio', [TarotController::class, 'grimoire'])->name('tarot.grimoire');
 
 require __DIR__.'/auth.php';

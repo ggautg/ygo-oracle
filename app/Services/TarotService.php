@@ -23,6 +23,8 @@ class TarotService
         $spread = $cards->values()->map(function ($card, $i) {
             $posture = $this->posture($card);
             $postureData = OraclePosture::where('posture', $posture)->first();
+            $raceEssence = $this->raceEssence($card->race);
+            $attributeEssence = $this->attributeEssence($card->attribute);
 
             return [
                 'position' => self::POSITIONS[$i] ?? null,
@@ -32,10 +34,15 @@ class TarotService
                 'level' => $card->level,
                 'atk' => $card->atk,
                 'def' => $card->def,
-                'description' => $card->description_es ?? $card->description,
                 'posture_label' => $postureData->label ?? null,
                 'posture_icon' => $postureData->icon ?? null,
-                'reading' => $this->renderCard($card),
+                'reading' => implode(' ', array_filter([$raceEssence, $attributeEssence])),
+                'description' => $card->description_es ?? $card->description,
+                'breakdown' => array_filter([
+                    $card->race ? ['label' => 'Raza', 'value' => $card->race, 'essence' => $raceEssence] : null,
+                    $card->attribute ? ['label' => 'Atributo', 'value' => $card->attribute, 'essence' => $attributeEssence] : null,
+                    ['label' => 'Postura', 'value' => $postureData->label ?? null, 'essence' => "ATK {$card->atk} / DEF {$card->def}"],
+                ]),
                 'image_url' => $card->image_url,
             ];
         });
@@ -43,6 +50,7 @@ class TarotService
         $coincidences = $this->findCoincidences($cards);
         $numerology = $this->numerologyReading($cards);
         $mysticMessage = $this->mysticMessage($cards);
+        $sigil = $this->generateSigil($seed);
 
         $reading = Reading::create([
             'uuid' => (string) Str::uuid(),
@@ -52,6 +60,7 @@ class TarotService
             'coincidences' => $coincidences,
             'numerology' => $numerology,
             'mystic_message' => $mysticMessage,
+            'sigil' => $sigil,
         ]);
 
         return [
@@ -60,6 +69,7 @@ class TarotService
             'coincidences' => $coincidences,
             'numerology' => $numerology,
             'mystic_message' => $mysticMessage,
+            'sigil' => $sigil,
         ];
     }
 
@@ -92,6 +102,53 @@ class TarotService
         ];
     }
 
+    private function generateSigil(string $seed): string
+{
+    $pointCount = 7;
+    $cx = 100; $cy = 100; $radius = 75;
+
+    // Puntos fijos, equiespaciados en el borde del círculo
+    $points = [];
+    for ($i = 0; $i < $pointCount; $i++) {
+        $angle = ($i / $pointCount) * 2 * M_PI - M_PI / 2;
+        $points[] = [
+            round($cx + $radius * cos($angle), 1),
+            round($cy + $radius * sin($angle), 1),
+        ];
+    }
+
+    // El hash decide el ORDEN de conexión, no la posición — esto genera el cruce de líneas
+    $order = [];
+    $used = [];
+    for ($i = 0; $i < $pointCount; $i++) {
+        $hexPair = substr($seed, ($i * 2) % 60, 2);
+        $idx = hexdec($hexPair) % $pointCount;
+        while (in_array($idx, $used)) {
+            $idx = ($idx + 1) % $pointCount;
+        }
+        $used[] = $idx;
+        $order[] = $idx;
+    }
+
+    $path = "M {$points[$order[0]][0]},{$points[$order[0]][1]} ";
+    for ($i = 1; $i < count($order); $i++) {
+        $p = $points[$order[$i]];
+        $path .= "L {$p[0]},{$p[1]} ";
+    }
+
+    $start = $points[$order[0]];
+    $end = $points[$order[count($order) - 1]];
+
+    return <<<SVG
+    <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="{$cx}" cy="{$cy}" r="90" fill="none" stroke="#c9a227" stroke-width="1" opacity="0.5"/>
+        <path d="{$path}" fill="none" stroke="#c9a227" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+        <circle cx="{$start[0]}" cy="{$start[1]}" r="4" fill="none" stroke="#c9a227" stroke-width="1.2"/>
+        <circle cx="{$end[0]}" cy="{$end[1]}" r="4" fill="none" stroke="#c9a227" stroke-width="1.2"/>
+    </svg>
+    SVG;
+}
+
     private function ritualSeed(?string $question = null): string
     {
         $entropy = implode('|', [
@@ -117,24 +174,38 @@ class TarotService
         });
     }
 
-    private function renderCard(YgoCard $card): string
+    private function posture(YgoCard $card): string
     {
-        $parts = array_filter([
-            $this->raceEssence($card->race),
-            $this->attributeEssence($card->attribute),
-        ]);
+        $atk = $card->atk ?? 0;
+        $def = $card->def ?? 0;
 
-        return implode('<br>', $parts);
+        if ($atk === 0 && $def === 0) {
+            return 'equilibrada';
+        }
+        if ($def === 0) {
+            return 'ofensiva';
+        }
+        if ($atk === 0) {
+            return 'defensiva';
+        }
+
+        $ratio = $atk / $def;
+
+        return match (true) {
+            $ratio >= 1.5 => 'ofensiva',
+            $ratio <= 0.67 => 'defensiva',
+            default => 'equilibrada',
+        };
     }
 
     private function raceEssence(?string $race): ?string
     {
-        return $race.': '.OracleRace::where('race', $race)->value('essence');
+        return OracleRace::where('race', $race)->value('essence');
     }
 
     private function attributeEssence(?string $attribute): ?string
     {
-        return $attribute.': '.OracleAttribute::where('attribute', $attribute)->value('essence');
+        return OracleAttribute::where('attribute', $attribute)->value('essence');
     }
 
     private function findCoincidences(Collection $cards): array
@@ -158,7 +229,12 @@ class TarotService
         $digit = $this->reduceToDigit($total);
         $meaning = OracleNumber::where('number', $digit)->value('meaning');
 
-        return ['total' => $total, 'digit' => $digit, 'meaning' => $meaning];
+        return [
+            'total' => $total,
+            'digit' => $digit,
+            'meaning' => $meaning,
+            'steps' => $cards->pluck('level')->all(),
+        ];
     }
 
     private function reduceToDigit(int $n): int
@@ -170,16 +246,6 @@ class TarotService
         return $n;
     }
 
-    private function extractRandomWord(string $ygoCardDescription): string
-    {
-        $words = array_filter(
-            preg_split('/[\s,.;:()]+/', $ygoCardDescription),
-            fn ($w) => strlen($w) > 3
-        );
-
-        return $words ? $words[array_rand($words)] : '...';
-    }
-
     private function mysticMessage(Collection $cards): string
     {
         return $cards
@@ -188,27 +254,13 @@ class TarotService
             ->implode(' · ');
     }
 
-    private function posture(YgoCard $card): string
+    private function extractRandomWord(string $description): string
     {
-        $atk = $card->atk ?? 0;
-        $def = $card->def ?? 0;
+        $words = array_filter(
+            preg_split('/[\s,.;:()]+/', $description),
+            fn ($w) => strlen($w) > 3
+        );
 
-        if ($atk === 0 && $def === 0) {
-            return 'equilibrada';
-        }
-        if ($def === 0) {
-            return 'ofensiva';
-        }
-        if ($atk === 0) {
-            return 'defensiva';
-        }
-
-        $ratio = $atk / $def;
-
-        return match (true) {
-            $ratio >= 1.5 => 'ofensiva',
-            $ratio <= 0.67 => 'defensiva',
-            default => 'equilibrada',
-        };
+        return $words ? $words[array_rand($words)] : '...';
     }
 }

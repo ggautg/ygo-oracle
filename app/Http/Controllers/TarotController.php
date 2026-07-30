@@ -2,6 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\OracleAttribute;
+use App\Models\OracleNumber;
+use App\Models\OraclePosture;
+use App\Models\OracleRace;
 use App\Models\Reading;
 use App\Services\TarotService;
 use Illuminate\Http\Request;
@@ -21,22 +25,35 @@ class TarotController extends Controller
 
         return response()->json($spread);
     }
-public function yesNoIndex()
-{
-    return Inertia::render('Tarot/YesNo');
-}
 
-public function drawYesNo(Request $request, TarotService $tarotService)
-{
-    $validated = $request->validate(['question' => 'nullable|string|max:255']);
-    return response()->json($tarotService->drawYesNo($validated['question'] ?? null));
-}
+    public function yesNoIndex()
+    {
+        return Inertia::render('Tarot/YesNo');
+    }
+
+    public function drawYesNo(Request $request, TarotService $tarotService)
+    {
+        $validated = $request->validate(['question' => 'nullable|string|max:255']);
+
+        return response()->json($tarotService->drawYesNo($validated['question'] ?? null));
+    }
+
     public function show(string $uuid)
     {
         $reading = Reading::where('uuid', $uuid)->firstOrFail();
 
         return Inertia::render('Tarot/Shared', [
             'reading' => $reading,
+        ]);
+    }
+
+    public function grimoire()
+    {
+        return Inertia::render('Tarot/Grimoire', [
+            'races' => OracleRace::orderBy('race')->get(),
+            'attributes' => OracleAttribute::orderBy('attribute')->get(),
+            'postures' => OraclePosture::orderBy('posture')->get(),
+            'numbers' => OracleNumber::orderBy('number')->get(),
         ]);
     }
 }
