@@ -6,6 +6,19 @@ import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createApp, h } from 'vue';
 import { ZiggyVue } from '../../vendor/tightenco/ziggy';
 
+const applySavedTheme = () => {
+    if (typeof window !== 'undefined') {
+        const saved = localStorage.getItem('ygo-theme');
+        if (saved && saved !== 'default') {
+            document.documentElement.setAttribute('data-theme', saved);
+        } else {
+            document.documentElement.removeAttribute('data-theme');
+        }
+    }
+};
+
+applySavedTheme();
+
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
 createInertiaApp({

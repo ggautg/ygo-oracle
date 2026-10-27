@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class YgoCard extends Model
 {
@@ -20,5 +21,12 @@ class YgoCard extends Model
         'description_es',
         'banlist_status',
         'image_url',
+        'archetype',
+        'theme_id',
     ];
+
+    public function theme(): BelongsTo
+    {
+        return $this->belongsTo(OracleTheme::class, 'theme_id');
+    }
 }

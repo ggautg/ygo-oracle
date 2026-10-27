@@ -3,6 +3,7 @@ import { ref } from 'vue';
 import axios from 'axios';
 import { Sparkles, Loader2, Eye, Hash, ScrollText, Swords, Scale, Shield } from 'lucide-vue-next';
 import OraculoNav from '@/Components/OraculoNav.vue';
+import ThemeSelector from '@/Components/ThemeSelector.vue';
 const POSTURE_ICONS = { Swords, Scale, Shield };
 
 const question = ref('');
@@ -58,6 +59,7 @@ async function drawSpread() {
 
 <template>
     <div class="min-h-screen bg-obsidian text-stone-200 px-4 py-12">
+        <ThemeSelector />
         <div class="max-w-4xl mx-auto">
             <OraculoNav />
             <h1

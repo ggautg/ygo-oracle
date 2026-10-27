@@ -13,13 +13,14 @@ export default {
     theme: {
         extend: {
             colors: {
-                obsidian: '#0b0e1a',
-                panel: '#12162c',
+                obsidian: 'var(--color-obsidian)',
+                panel: 'var(--color-panel)',
                 gold: {
-                    DEFAULT: '#c9a227',
-                    dim: '#8a7327',
+                    DEFAULT: 'var(--color-gold)',
+                    dim: 'var(--color-gold-dim)',
                 },
-                shadowpurple: '#5b3e96',
+                shadowpurple: 'var(--color-accent)',
+                accent: 'var(--color-accent)',
             },
             fontFamily: {
                 display: ['Cinzel', 'serif'],
